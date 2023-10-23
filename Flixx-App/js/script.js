@@ -550,28 +550,42 @@ function init() {
 }
 
 // Function to start Speech Recogination
-async function startRecognition() {
+function startRecognition() {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    let speak_data = ''
     // Set a maximum pause between speech recognition
     recognition.interimResults = true; // Enable interim results
     recognition.continuous = true; // Continue listening
     recognition.maxSilence = 5; // Set the maximum pause in seconds
     document.querySelector('#search-term').placeholder = "Speak Something...";
-    recognition.onresult = (event) => {
+    recognition.onresult = async (event) => {
         // Handle recognized speech here
         const transcript = event.results[0][0].transcript;
-        console.log("Recognized: " + transcript.toLowerCase().replace(' ', '+'));
-         // Check the search type
-         if (movieRadio.checked) {
-            searchFilterData(transcript.toLowerCase().replace(' ', '+'), movieRadio.value);
+        // console.log("Recognized: " + transcript.toLowerCase().replace(' ', '+'));
+        // Check the search type
+        if (movieRadio.checked) {
+            global.search.term = transcript.toLowerCase().replace(' ', '+');
+            global.search.type = movieRadio.value;
+            
+            setTimeout(()=>{
+                showSpinner();
+                window.location.href = `/search.html?type=${global.search.type}&search-term=${global.search.term}`;
+            }, 3000);
+            // searchFilterData(transcript.toLowerCase().replace(' ', '+'), movieRadio.value);
         }
         if (tvRadio.checked) {
-            searchFilterData(transcript.toLowerCase().replace(' ', '+'), tvRadio.value);
+            global.search.term = transcript.toLowerCase().replace(' ', '+');
+            global.search.type = tvRadio.value;
+            setTimeout(()=>{
+                showSpinner();
+                window.location.href = `/search.html?type=${global.search.type}&search-term=${global.search.term}`;
+            }, 3000);
+            // searchFilterData(transcript.toLowerCase().replace(' ', '+'), tvRadio.value);
         }
         // searchFilterData(transcript.toLowerCase().replace(' ', '+'));
         document.querySelector('#search-term').value = transcript.toLowerCase();
         setTimeout(() => {
+            
+            // window.location.href = '/search.html';
             recognition.stop();
         }, 3000);
     };
