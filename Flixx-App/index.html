@@ -64,8 +64,23 @@
         </ul>
       </form>
     </div>
+      <!-- Modal Section -->
+  <modal-component class="modal-component" id="speak-modal" data-placement='top-center'>
+    <header class='modal-header'>
+      <h2 class='modal-title' id="modal-title"></h2>
+      <button class="speak-close-btn" id="speak-close-btn"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+    </main>
+    <footer class='modal-footer'>
+      <button id="speech" class="talk-btn">
+        <div class="pulse-ring" id="pulse-ring"></div>
+        <i class="fa fa-microphone" aria-hidden="true"></i></button>
+      <!-- <button type='button' class='radio-btn btn-secondary' data-dismiss='modal'><i class="fa-solid fa-microphone"></i></button> -->
+    </footer>
+  </modal-component>
   </section>
 
+  <div class="overlay" id="background-overlay"></div> 
   <!-- Popular Movies -->
   <section class="container">
     <h2>Popular Movies</h2>
