@@ -20,6 +20,13 @@ const movieRadio = document.getElementById("movie");
 const tvRadio = document.getElementById("tv");
 const speak_btn = document.querySelector('#speak-btn');
 
+// Speech Recogination
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+// Set a maximum pause between speech recognition
+recognition.interimResults = true; // Enable interim results
+recognition.continuous = true; // Continue listening
+recognition.maxSilence = 5; // Set the maximum pause in seconds
+
 // Displaying the Popular Movie
 async function displayPopularMovie() {
     const { results } = await fetchAPIData('movie/popular');
@@ -549,19 +556,29 @@ function init() {
     highlightActiveLink();
 }
 
+// Function to Open the Speak Modal
+function speakButtonModal(){
+    document.querySelector('#speak-modal').classList.add('modal-component-open');
+    document.querySelector('.overlay').classList.add('overlay-active');
+}
+
+// Function to close the speak modal
+function closeButtonModal(){
+    recognition.stop();
+    document.querySelector('#speak-modal').classList.remove('modal-component-open');
+    document.querySelector('#background-overlay').classList.remove('overlay-active');
+
+}
+
 // Function to start Speech Recogination
 function startRecognition() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    // Set a maximum pause between speech recognition
-    recognition.interimResults = true; // Enable interim results
-    recognition.continuous = true; // Continue listening
-    recognition.maxSilence = 5; // Set the maximum pause in seconds
-    document.querySelector('#search-term').placeholder = "Speak Something...";
+    document.querySelector('#modal-title').textContent = 'Listening...';
     recognition.onresult = async (event) => {
         // Handle recognized speech here
         const transcript = event.results[0][0].transcript;
         // console.log("Recognized: " + transcript.toLowerCase().replace(' ', '+'));
         // Check the search type
+        document.querySelector('#modal-title').textContent = transcript;
         if (movieRadio.checked) {
             global.search.term = transcript.toLowerCase().replace(' ', '+');
             global.search.type = movieRadio.value;
@@ -581,13 +598,7 @@ function startRecognition() {
             }, 3000);
             // searchFilterData(transcript.toLowerCase().replace(' ', '+'), tvRadio.value);
         }
-        // searchFilterData(transcript.toLowerCase().replace(' ', '+'));
-        document.querySelector('#search-term').value = transcript.toLowerCase();
-        setTimeout(() => {
-            
-            // window.location.href = '/search.html';
-            recognition.stop();
-        }, 3000);
+        setTimeout(() => { recognition.stop(); }, 3000);
     };
 
     recognition.onend = () => {
@@ -600,7 +611,9 @@ function startRecognition() {
 
     recognition.onerror = (event) => {
         if (event.error === "no-speech") {
-            document.querySelector('#search-term').placeholder = "Didn't hear that. Try again.";
+            document.querySelector('#modal-title').textContent = "Didn't hear that. Try again.";
+            document.querySelector('#speech').style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+            document.querySelector('#pulse-ring').classList.remove('pulse-ring');
         }
     };
 }
@@ -608,7 +621,8 @@ function startRecognition() {
 // Search the Data From speech recogination
 function speechRecogination() {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        speak_btn.addEventListener('click', () => {
+        speak_btn.addEventListener('click', (event) => {
+            speakButtonModal(event);            
             startRecognition();
         });
     }
@@ -638,6 +652,13 @@ function Init() {
     });
     document.querySelector("#search-term").addEventListener('click', () => {
         document.querySelector('#search-term').placeholder = "Enter search term";
+    });
+    document.querySelector('.overlay').addEventListener('click', closeButtonModal);
+    document.querySelector('#speak-close-btn').addEventListener('click', closeButtonModal);
+    document.querySelector('#speech').addEventListener('click', ()=>{
+        document.querySelector('#speech').style.backgroundColor = 'red';
+        document.querySelector('#pulse-ring').classList.add('pulse-ring');
+        startRecognition();
     });
 }
 Init();
