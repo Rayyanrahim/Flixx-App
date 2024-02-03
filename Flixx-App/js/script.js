@@ -13,7 +13,7 @@ const global = {
         apiUrl: 'https://api.themoviedb.org/3/'
     }
 }
-
+console.log(global.currentpage);
 // Declaring the Variable
 const search_value = document.querySelector('#search-term');
 const movieRadio = document.getElementById("movie");
@@ -149,15 +149,19 @@ async function displayMovieDetails() {
 // Function to Open the Trailor of Show modal
 async function showTrailor(movieId) {
     // Get the Data From The API
-    const { results } = await fetchAPIData(`movie/${movieId}/videos`);
+    let page = global.currentpage.split('-')[0].replace('/', '');
+    const { results } = await fetchAPIData(`${page}/${movieId}/videos`);
+    console.log(results);
     const trailerKey = results.find(result => result.type === "Trailer");
+    const otherResult = trailerKey ? trailerKey : results.find(result => result.type !== "Trailer");
+    console.log(otherResult);
     document.querySelector('#trailor').addEventListener('click', (event) => {
         const elemid = event.target.id;
         if (elemid === 'trailor') {
             document.querySelector('#movie-trailor-modal').classList.add('modal-open');
             document.querySelector('#background-overlay').classList.add('overlay-active');
         }
-        displayTrailor(trailerKey);
+        displayTrailor(otherResult);
     });
     document.querySelector('#background-overlay').addEventListener('click', closeTrailor);
     document.querySelector('#close-btn').addEventListener('click', closeTrailor);
@@ -224,6 +228,7 @@ async function displayShowDetails() {
       ${show.genres.map((genre) => `<li>${genre.name}</li>`).join('')}
       </ul>
       <a href="${show.homepage}" target="_blank" class="btn">Visit Movie Homepage</a>
+      <a href="#" class="btn" id="trailor">Watch Trailor</a>
     </div>
   </div>
   <div class="details-bottom">
@@ -238,6 +243,8 @@ async function displayShowDetails() {
   </div>`;
 
     document.querySelector('#show-details').appendChild(div);
+
+    showTrailor(showId)
 }
 
 // Display BackDrop On Details Page
