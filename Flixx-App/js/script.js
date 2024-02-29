@@ -13,7 +13,6 @@ const global = {
         apiUrl: 'https://api.themoviedb.org/3/'
     }
 }
-console.log(global.currentpage);
 // Declaring the Variable
 const search_value = document.querySelector('#search-term');
 const movieRadio = document.getElementById("movie");
@@ -151,10 +150,8 @@ async function showTrailor(movieId) {
     // Get the Data From The API
     let page = global.currentpage.split('-')[0].replace('/', '');
     const { results } = await fetchAPIData(`${page}/${movieId}/videos`);
-    console.log(results);
     const trailerKey = results.find(result => result.type === "Trailer");
     const otherResult = trailerKey ? trailerKey : results.find(result => result.type !== "Trailer");
-    console.log(otherResult);
     document.querySelector('#trailor').addEventListener('click', (event) => {
         const elemid = event.target.id;
         if (elemid === 'trailor') {
@@ -186,9 +183,9 @@ function displayTrailor(trailerKey) {
 
 // Function to Close the Trailor of Show Modal
 function closeTrailor() {
+    document.querySelector('#iframe').innerHTML = '';
     document.querySelector('#movie-trailor-modal').classList.remove('modal-open');
     document.querySelector('#background-overlay').classList.remove('overlay-active');
-    document.querySelector('#iframe').innerHTML = '';
 }
 
 // Display Show Details
@@ -243,8 +240,7 @@ async function displayShowDetails() {
   </div>`;
 
     document.querySelector('#show-details').appendChild(div);
-
-    showTrailor(showId)
+        showTrailor(showId);
 }
 
 // Display BackDrop On Details Page
@@ -535,6 +531,80 @@ function addCommasToNum(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+// Function to Open the Speak Modal
+function speakButtonModal(){
+    document.querySelector('#speak-modal').classList.add('modal-component-open');
+    document.querySelector('.overlay').classList.add('overlay-active');
+}
+
+// Function to close the speak modal
+function closeButtonModal(){
+    recognition.stop();
+    document.querySelector('#speak-modal').classList.remove('modal-component-open');
+    document.querySelector('#background-overlay').classList.remove('overlay-active');
+
+}
+
+// Function to start Speech Recogination
+function startRecognition() {
+    document.querySelector('#modal-title').textContent = 'Listening...';
+    // Start speech recognition
+    recognition.start();
+    recognition.onresult = async (event) => {
+        // Handle recognized speech here
+        const transcript = event.results[0][0].transcript;
+        // Check the search type
+        document.querySelector('#modal-title').textContent = transcript;
+        if (movieRadio.checked) {
+            global.search.term = transcript.toLowerCase().replace(' ', '+');
+            global.search.type = movieRadio.value;
+            
+            setTimeout(()=>{
+                showSpinner();
+                window.location.href = `/search.html?type=${global.search.type}&search-term=${global.search.term}`;
+            }, 3000);
+        }
+        if (tvRadio.checked) {
+            global.search.term = transcript.toLowerCase().replace(' ', '+');
+            global.search.type = tvRadio.value;
+            setTimeout(()=>{
+                showSpinner();
+                window.location.href = `/search.html?type=${global.search.type}&search-term=${global.search.term}`;
+            }, 3000);
+            // searchFilterData(transcript.toLowerCase().replace(' ', '+'), tvRadio.value);
+        }
+        setTimeout(() => { recognition.stop(); }, 3000);
+    };
+
+    recognition.onerror = (event) => {
+        if (event.error === "no-speech") {
+            errorMsg();
+        }
+    };
+    recognition.onend = () => {
+        // Restart recognition after a pause
+        clearTimeout(recognitionTimeout);
+    };
+
+    recognitionTimeout = setTimeout(() => {
+        recognition.onerror({ error: "no-speech" });
+    }, 6000);
+}
+
+// Function to show the error msg when recogination is equal to no-speech
+function errorMsg(){
+    document.querySelector('#modal-title').textContent = "Didn't hear that. Try again.";
+    document.querySelector('#speech').style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+    document.querySelector('#pulse-ring').classList.remove('pulse-ring');
+}
+
+// Function to make the audio btn red
+
+function audioBtnRed(){
+    document.querySelector('#speech').style.backgroundColor ='red';
+    document.querySelector('#pulse-ring').classList.add('pulse-ring');
+}
+
 // Init App
 function init() {
 
@@ -563,110 +633,48 @@ function init() {
     highlightActiveLink();
 }
 
-// Function to Open the Speak Modal
-function speakButtonModal(){
-    document.querySelector('#speak-modal').classList.add('modal-component-open');
-    document.querySelector('.overlay').classList.add('overlay-active');
-}
-
-// Function to close the speak modal
-function closeButtonModal(){
-    recognition.stop();
-    document.querySelector('#speak-modal').classList.remove('modal-component-open');
-    document.querySelector('#background-overlay').classList.remove('overlay-active');
-
-}
-
-// Function to start Speech Recogination
-function startRecognition() {
-    document.querySelector('#modal-title').textContent = 'Listening...';
-    recognition.onresult = async (event) => {
-        // Handle recognized speech here
-        const transcript = event.results[0][0].transcript;
-        // console.log("Recognized: " + transcript.toLowerCase().replace(' ', '+'));
-        // Check the search type
-        document.querySelector('#modal-title').textContent = transcript;
-        if (movieRadio.checked) {
-            global.search.term = transcript.toLowerCase().replace(' ', '+');
-            global.search.type = movieRadio.value;
-            
-            setTimeout(()=>{
-                showSpinner();
-                window.location.href = `/search.html?type=${global.search.type}&search-term=${global.search.term}`;
-            }, 3000);
-            // searchFilterData(transcript.toLowerCase().replace(' ', '+'), movieRadio.value);
-        }
-        if (tvRadio.checked) {
-            global.search.term = transcript.toLowerCase().replace(' ', '+');
-            global.search.type = tvRadio.value;
-            setTimeout(()=>{
-                showSpinner();
-                window.location.href = `/search.html?type=${global.search.type}&search-term=${global.search.term}`;
-            }, 3000);
-            // searchFilterData(transcript.toLowerCase().replace(' ', '+'), tvRadio.value);
-        }
-        setTimeout(() => { recognition.stop(); }, 3000);
-    };
-
-    recognition.onend = () => {
-        // Restart recognition after a pause
-        console.log("Speech recognition ended. Restarting...");
-    };
-
-    // Start speech recognition
-    recognition.start();
-
-    recognition.onerror = (event) => {
-        if (event.error === "no-speech") {
-            document.querySelector('#modal-title').textContent = "Didn't hear that. Try again.";
-            document.querySelector('#speech').style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-            document.querySelector('#pulse-ring').classList.remove('pulse-ring');
-        }
-    };
-}
-
-// Search the Data From speech recogination
-function speechRecogination() {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        speak_btn.addEventListener('click', (event) => {
-            speakButtonModal(event);            
-            startRecognition();
-        });
-    }
-}
 
 // When DOM is loaded it initialize the event listner
 function Init() {
-
     document.addEventListener('DOMContentLoaded', init);
-
     document.addEventListener('click', () => {
         document.querySelector('#search-list').innerHTML = '';
         document.querySelector('#search-list').classList.remove('search-list');
     })
 
     // Take the value from the search form
-    search_value.addEventListener('keyup', (e) => {
-        if (e.key) {
-            // Check the search type
-            if (movieRadio.checked) {
-                searchFilterData(search_value.value, movieRadio.value);
+    if(search_value){
+        search_value.addEventListener('keyup', (e) => {
+            if (e.key) {
+                // Check the search type
+                if (movieRadio.checked) {
+                    searchFilterData(search_value.value, movieRadio.value);
+                }
+                if (tvRadio.checked) {
+                    searchFilterData(search_value.value, tvRadio.value);
+                }
             }
-            if (tvRadio.checked) {
-                searchFilterData(search_value.value, tvRadio.value);
-            }
-        }
-    });
-    document.querySelector("#search-term").addEventListener('click', () => {
-        document.querySelector('#search-term').placeholder = "Enter search term";
-    });
+        });
+    }
+    if(search_value){
+        document.querySelector("#search-term").addEventListener('click', () => {
+            document.querySelector('#search-term').placeholder = "Enter search term";
+        });
+    }
     document.querySelector('.overlay').addEventListener('click', closeButtonModal);
     document.querySelector('#speak-close-btn').addEventListener('click', closeButtonModal);
     document.querySelector('#speech').addEventListener('click', ()=>{
-        document.querySelector('#speech').style.backgroundColor = 'red';
-        document.querySelector('#pulse-ring').classList.add('pulse-ring');
+        audioBtnRed();
         startRecognition();
+    });
+    // Search the data using speak btn
+    document.querySelector('#speak-btn').addEventListener('click', (event)=>{
+        // Check the version is avaialable in window or in browser
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                audioBtnRed();
+                speakButtonModal();            
+                startRecognition();
+        }
     });
 }
 Init();
-speechRecogination();
